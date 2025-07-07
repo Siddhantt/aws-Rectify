@@ -1,0 +1,43 @@
+// backend/lambda_function.js
+
+const AWS = require('aws-sdk');
+const dynamo = new AWS.DynamoDB.DocumentClient();
+
+exports.handler = async (event) => {
+  try {
+    const body = JSON.parse(event.body);
+
+    const { name, email, message } = body;
+
+    if (!name || !email || !message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing fields in request' })
+      };
+    }
+
+    const params = {
+      TableName: 'ContactMessages',
+      Item: {
+        email,
+        name,
+        message,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    await dynamo.put(params).promise();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, message: 'Message saved' })
+    };
+
+  } catch (err) {
+    console.error('Error:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal Server Error' })
+    };
+  }
+};

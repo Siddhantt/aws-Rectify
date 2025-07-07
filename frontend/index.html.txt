@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Hi, I'm Siddhant Tayade</h1>
+    <p>Aspiring DevOps Engineer | AWS | Docker | Kubernetes</p>
+  </header>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="about.html">About Me</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <section>
+    <h2>Projects</h2>
+    <ul>
+      <li>🚀 DevOps Capstone Project</li>
+      <li>🌐 News Aggregator on AWS</li>
+      <li>📦 Docker + Kubernetes Bookstore</li>
+    </ul>
+  </section>
+  <footer>
+    <p>&copy; 2025 Siddhant Tayade</p>
+  </footer>
+</body>
+</html>
