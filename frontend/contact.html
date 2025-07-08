@@ -32,7 +32,7 @@
         e.target[2].value
       ];
 
-        const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {
+      const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {  // Replace with your actual API endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, message })
