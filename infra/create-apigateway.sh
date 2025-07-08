@@ -39,7 +39,7 @@ aws apigateway put-integration \
   --http-method POST \
   --type AWS_PROXY \
   --integration-http-method POST \
-  --uri arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations
+  --uri arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations
 
 echo "Granting API Gateway permissions to invoke Lambda..."
 aws lambda add-permission \
@@ -47,11 +47,11 @@ aws lambda add-permission \
   --statement-id apigateway-access \
   --action lambda:InvokeFunction \
   --principal apigateway.amazonaws.com \
-  --source-arn arn:aws:execute-api:us-east-1:*:$API_ID/*/POST/contact
+  --source-arn arn:aws:execute-api:ap-south-1:*:$API_ID/*/POST/contact
 
 echo "Deploying API..."
 aws apigateway create-deployment \
   --rest-api-id $API_ID \
   --stage-name prod
 
-echo "API URL: https://$API_ID.execute-api.us-east-1.amazonaws.com/prod/contact"
+echo "API URL: https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
