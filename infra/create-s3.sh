@@ -12,6 +12,11 @@ aws s3api create-bucket \
   --region $AWS_REGION \
   --create-bucket-configuration LocationConstraint=$AWS_REGION
 
+# Disable block public access
+echo "Disabling block public access..."
+aws s3api delete-bucket-public-access-block \
+  --bucket $BUCKET_NAME
+
 # Enabling static website hosting
 echo "Enabling static website hosting..."
 aws s3 website s3://$BUCKET_NAME/ \
