@@ -32,7 +32,7 @@ aws s3 website s3://$BUCKET_NAME/ \
 echo "Applying bucket policy..."
 aws s3api put-bucket-policy \
   --bucket $BUCKET_NAME \
-  --policy file://./bucket-policy.json
+  -policy file://./infra/bucket-policy.json
 
 # Syncing website content
 echo "Syncing website content from ./frontend to S3..."
