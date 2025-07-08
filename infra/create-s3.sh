@@ -5,6 +5,7 @@ set -e
 BUCKET_NAME="siddhant-portfolio-2025"
 AWS_REGION="ap-south-1"  # Specify your region here
 
+<<<<<<< HEAD
 # Check if the bucket already exists
 echo "Checking if S3 bucket exists: $BUCKET_NAME..."
 BUCKET_EXISTS=$(aws s3api head-bucket --bucket $BUCKET_NAME --region $AWS_REGION 2>&1)
@@ -23,6 +24,16 @@ else
 fi
 
 # Disable block public access (make the bucket public)
+=======
+# Create the S3 bucket with the specified region
+echo "Creating S3 bucket: $BUCKET_NAME in region: $AWS_REGION..."
+aws s3api create-bucket \
+  --bucket $BUCKET_NAME \
+  --region $AWS_REGION \
+  --create-bucket-configuration LocationConstraint=$AWS_REGION
+
+# Disable block public access
+>>>>>>> 84256a2e34ce690b2d5f1cdc931b9ed44bf7e66a
 echo "Disabling block public access..."
 aws s3api delete-bucket-public-access-block \
   --bucket $BUCKET_NAME
