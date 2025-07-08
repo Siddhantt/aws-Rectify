@@ -7,7 +7,7 @@ ZIP_FILE="lambda_function.zip"
 ROLE_ARN="arn:aws:iam::326641642949:role/lambda-dynamodb-role"  # Use the ARN of your role
 
 echo "Zipping Lambda function..."
-zip $ZIP_FILE lambda_function.py
+zip $ZIP_FILE backend/lambda_function.py  # Correct path to lambda_function.py
 
 echo "Deploying Lambda function..."
 aws lambda create-function \
