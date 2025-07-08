@@ -2,7 +2,7 @@
 
 set -e
 
-FUNCTION_NAME="ContactFormHandler"
+FUNCTION_NAME="myLambdaFunction"  # Update the Lambda function name
 
 echo "Creating API Gateway REST API..."
 API_ID=$(aws apigateway create-rest-api \
