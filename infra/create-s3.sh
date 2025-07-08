@@ -21,7 +21,7 @@ aws s3 website s3://$BUCKET_NAME/ \
 echo "Applying public-read policy..."
 aws s3api put-bucket-policy \
   --bucket $BUCKET_NAME \
-  --policy file://infra/bucket-policy.json
+  --policy file://bucket-policy.json
 
 echo "Syncing website content..."
 aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete
