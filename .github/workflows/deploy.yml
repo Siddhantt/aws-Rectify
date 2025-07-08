@@ -8,7 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -18,22 +17,52 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1  # Use `aws-region` here instead of `region`
+          aws-region: ap-south-1
 
       - name: Make shell scripts executable
         run: chmod +x infra/*.sh
 
+      # Step to Create S3 Bucket, only if not created already
       - name: Create and configure S3 bucket
-        run: ./infra/create-s3.sh
+        run: |
+          if ! aws s3api head-bucket --bucket siddhant-portfolio-2025; then
+            ./infra/create-s3.sh
+          else
+            echo "S3 bucket already exists, skipping creation."
+          fi
 
+      # Step to Create DynamoDB Table, only if not created already
       - name: Create DynamoDB table
-        run: ./infra/create-dynamodb.sh
+        run: |
+          if ! aws dynamodb describe-table --table-name ContactMessages; then
+            ./infra/create-dynamodb.sh
+          else
+            echo "DynamoDB table already exists, skipping creation."
+          fi
 
+      # Step to Create IAM role, only if not created already
       - name: Create IAM role for Lambda
-        run: ./infra/create-iam.sh
+        run: |
+          if ! aws iam get-role --role-name lambda-dynamodb-role; then
+            ./infra/create-iam.sh
+          else
+            echo "IAM role already exists, skipping creation."
+          fi
 
+      # Step to Deploy Lambda function, only if not created already
       - name: Deploy Lambda function
-        run: ./infra/create-lambda.sh
+        run: |
+          if ! aws lambda get-function --function-name myLambdaFunction; then
+            ./infra/create-lambda.sh
+          else
+            echo "Lambda function already exists, skipping creation."
+          fi
 
+      # Step to Setup API Gateway, only if not created already
       - name: Setup API Gateway
-        run: ./infra/create-apigateway.sh
+        run: |
+          if ! aws apigateway get-rest-apis; then
+            ./infra/create-apigateway.sh
+          else
+            echo "API Gateway already exists, skipping creation."
+          fi
