@@ -3,54 +3,35 @@
 set -e
 
 BUCKET_NAME="siddhant-portfolio-2025"
-AWS_REGION="ap-south-1"  # Specify your region here
+AWS_REGION="ap-south-1"  # Mumbai region
 
-<<<<<<< HEAD
-# Check if the bucket already exists
-echo "Checking if S3 bucket exists: $BUCKET_NAME..."
-BUCKET_EXISTS=$(aws s3api head-bucket --bucket $BUCKET_NAME --region $AWS_REGION 2>&1)
-
-if [[ $BUCKET_EXISTS == *"Not Found"* ]]; then
-  echo "Bucket does not exist. Creating S3 bucket: $BUCKET_NAME in region: $AWS_REGION..."
-  
-  # Create the S3 bucket with the specified region
+# Create S3 bucket
+echo "Creating S3 bucket: $BUCKET_NAME..."
+if [[ "$AWS_REGION" == "us-east-1" ]]; then
+  # No LocationConstraint needed for us-east-1
+  aws s3api create-bucket --bucket $BUCKET_NAME --region $AWS_REGION
+else
+  # Add LocationConstraint for other regions like ap-south-1 (Mumbai)
   aws s3api create-bucket \
     --bucket $BUCKET_NAME \
     --region $AWS_REGION \
     --create-bucket-configuration LocationConstraint=$AWS_REGION
-
-else
-  echo "Bucket $BUCKET_NAME already exists. Skipping creation..."
 fi
 
-# Disable block public access (make the bucket public)
-=======
-# Create the S3 bucket with the specified region
-echo "Creating S3 bucket: $BUCKET_NAME in region: $AWS_REGION..."
-aws s3api create-bucket \
-  --bucket $BUCKET_NAME \
-  --region $AWS_REGION \
-  --create-bucket-configuration LocationConstraint=$AWS_REGION
-
-# Disable block public access
->>>>>>> 84256a2e34ce690b2d5f1cdc931b9ed44bf7e66a
 echo "Disabling block public access..."
-aws s3api delete-bucket-public-access-block \
-  --bucket $BUCKET_NAME
+aws s3api delete-public-access-block \
+  --bucket $BUCKET_NAME || echo "Failed to delete block public access. It might not exist."
 
-# Enabling static website hosting
 echo "Enabling static website hosting..."
 aws s3 website s3://$BUCKET_NAME/ \
   --index-document index.html \
   --error-document error.html
 
-# Applying bucket policy
-echo "Applying bucket policy..."
+echo "Applying public-read policy..."
 aws s3api put-bucket-policy \
   --bucket $BUCKET_NAME \
-  --policy file://./infra/bucket-policy.json
+  --policy file://infra/bucket-policy.json
 
-# Syncing website content
 echo "Syncing website content..."
 aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete
 
