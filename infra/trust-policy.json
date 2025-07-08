@@ -11,7 +11,7 @@
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::<your-account-id>:user/<your-github-actions-user>"
+        "AWS": "arn:aws:iam::326641642949:user/devops-user"
       },
       "Action": "sts:AssumeRole"
     }
