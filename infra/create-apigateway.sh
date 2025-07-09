@@ -3,6 +3,7 @@
 set -e
 
 FUNCTION_NAME="myLambdaFunction"
+ACCOUNT_ID="326641642949"
 
 echo "Creating API Gateway REST API..."
 API_ID=$(aws apigateway create-rest-api \
@@ -15,7 +16,6 @@ PARENT_ID=$(aws apigateway get-resources \
   --query 'items[0].id' \
   --output text)
 
-# Check if /contact resource already exists
 RESOURCE_EXISTS=$(aws apigateway get-resources --rest-api-id $API_ID | grep -c '"pathPart": "contact"')
 
 if [ "$RESOURCE_EXISTS" -eq 0 ]; then
@@ -48,17 +48,18 @@ if [ "$RESOURCE_EXISTS" -eq 0 ]; then
   echo "Granting API Gateway permissions to invoke Lambda..."
   aws lambda add-permission \
     --function-name $FUNCTION_NAME \
-    --statement-id apigateway-access \
+    --statement-id apigateway-access-$(date +%s) \
     --action lambda:InvokeFunction \
     --principal apigateway.amazonaws.com \
-    --source-arn arn:aws:execute-api:ap-south-1:*:$API_ID/*/POST/contact
+    --source-arn arn:aws:execute-api:ap-south-1:$ACCOUNT_ID:$API_ID/*/POST/contact
 
   echo "Deploying API..."
   aws apigateway create-deployment \
     --rest-api-id $API_ID \
     --stage-name prod
 
-  echo "API URL: https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
+  echo "✅ API is ready:"
+  echo "🔗 https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
 else
   echo "/contact resource already exists. Skipping creation."
 fi
