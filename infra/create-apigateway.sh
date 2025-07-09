@@ -84,7 +84,6 @@ aws lambda add-permission \
   --source-arn arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/POST/contact || echo "Permission already granted."
 
 # 🔥 CORS: Add OPTIONS method
-# 🔥 CORS: Add OPTIONS method
 echo "🔧 Adding OPTIONS method for CORS..."
 aws apigateway put-method \
   --rest-api-id $API_ID \
@@ -98,10 +97,8 @@ aws apigateway put-method-response \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters method.response.header.Access-Control-Allow-Headers="Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" \
-                        method.response.header.Access-Control-Allow-Methods="POST,OPTIONS" \
-                        method.response.header.Access-Control-Allow-Origin="*" \
-  --response-models '{"application/json":"Empty"}' \
+  --response-parameters '{"method.response.header.Access-Control-Allow-Headers": true, "method.response.header.Access-Control-Allow-Methods": true, "method.response.header.Access-Control-Allow-Origin": true}' \
+  --response-models '{"application/json": "Empty"}' \
   --region $REGION
 
 aws apigateway put-integration \
@@ -109,7 +106,7 @@ aws apigateway put-integration \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --type MOCK \
-  --request-templates '{"application/json":"{\"statusCode\": 200}"}' \
+  --request-templates '{"application/json": "{\"statusCode\": 200}"}' \
   --region $REGION
 
 aws apigateway put-integration-response \
@@ -117,11 +114,10 @@ aws apigateway put-integration-response \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters method.response.header.Access-Control-Allow-Headers="Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" \
-                        method.response.header.Access-Control-Allow-Methods="POST,OPTIONS" \
-                        method.response.header.Access-Control-Allow-Origin="*" \
-  --response-templates '{"application/json":""}' \
+  --response-parameters '{"method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'", "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'", "method.response.header.Access-Control-Allow-Origin": "'*'"}' \
+  --response-templates '{"application/json": ""}' \
   --region $REGION
+
 
 
 # 🚀 Deploy
