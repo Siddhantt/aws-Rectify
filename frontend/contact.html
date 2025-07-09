@@ -3,6 +3,14 @@
 <head>
   <title>Contact</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #status.success { color: green; }
+    #status.error { color: red; }
+  </style>
 </head>
 <body>
   <header><h1>Contact Me</h1></header>
@@ -14,48 +22,51 @@
 
   <section>
     <form id="contactForm">
-      <input name="name" type="text" id="name" placeholder="Your Name" required />
-      <input name="email" type="email" id="email" placeholder="Your Email" required />
-      <textarea name="message" id="message" placeholder="Your Message" required></textarea>
+      <input name="name" type="text" placeholder="Your Name" required />
+      <input name="email" type="email" placeholder="Your Email" required />
+      <textarea name="message" placeholder="Your Message" required></textarea>
       <button type="submit">Send</button>
     </form>
-    <div id="responseMessage" style="margin-top: 1em;"></div>
+    <div id="status"></div>
   </section>
 
   <script>
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const message = document.getElementById("message").value;
+      const status = document.getElementById("status");
+      status.textContent = "Sending...";
+      status.className = "";
 
-      const responseDiv = document.getElementById("responseMessage");
-      responseDiv.innerText = "Sending...";
+      const formData = new FormData(e.target);
+      const body = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        message: formData.get("message")
+      };
 
       try {
         const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, message })
+          body: JSON.stringify(body)
         });
 
         const data = await res.json();
-
         if (res.ok) {
-          responseDiv.innerText = data.message || "✅ Message sent!";
-          responseDiv.style.color = "green";
+          status.textContent = data.message || "Message sent successfully!";
+          status.className = "success";
+          e.target.reset();
         } else {
-          responseDiv.innerText = data.error || "❌ Something went wrong.";
-          responseDiv.style.color = "red";
+          status.textContent = data.error || "Something went wrong!";
+          status.className = "error";
         }
       } catch (err) {
-        console.error("Error:", err);
-        responseDiv.innerText = "❌ Could not send message. Try again later.";
-        responseDiv.style.color = "red";
+        console.error(err);
+        status.textContent = "Network error or server not reachable.";
+        status.className = "error";
       }
     });
   </script>
 </body>
 </html>
-
