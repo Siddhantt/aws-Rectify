@@ -83,56 +83,7 @@ aws lambda add-permission \
   --region $REGION \
   --source-arn arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/POST/contact || echo "Permission already granted."
 
-# CORS Setup
-echo "🔧 Adding OPTIONS method for CORS..."
-aws apigateway put-method \
-  --rest-api-id $API_ID \
-  --resource-id $RESOURCE_ID \
-  --http-method OPTIONS \
-  --authorization-type NONE \
-  --region $REGION 2>/dev/null || echo "✅ OPTIONS method already exists."
-
-aws apigateway put-method-response \
-  --rest-api-id $API_ID \
-  --resource-id $RESOURCE_ID \
-  --http-method OPTIONS \
-  --status-code 200 \
-  --response-parameters method.response.header.Access-Control-Allow-Headers=true \
-  --response-parameters method.response.header.Access-Control-Allow-Methods=true \
-  --response-parameters method.response.header.Access-Control-Allow-Origin=true \
-  --region $REGION 2>/dev/null || echo "✅ Method response already exists."
-
-aws apigateway put-integration \
-  --rest-api-id $API_ID \
-  --resource-id $RESOURCE_ID \
-  --http-method OPTIONS \
-  --type MOCK \
-  --request-templates '{"application/json":"{\"statusCode\": 200}"}' \
-  --region $REGION
-
-aws apigateway put-integration-response \
-  --rest-api-id $API_ID \
-  --resource-id $RESOURCE_ID \
-  --http-method OPTIONS \
-  --status-code 200 \
-  --response-parameters method.response.header.Access-Control-Allow-Headers="'integration.response.header.Access-Control-Allow-Headers'" \
-  --response-parameters method.response.header.Access-Control-Allow-Methods="'integration.response.header.Access-Control-Allow-Methods'" \
-  --response-parameters method.response.header.Access-Control-Allow-Origin="'integration.response.header.Access-Control-Allow-Origin'" \
-  --region $REGION
-
-# Inject actual values via update
-aws apigateway update-integration-response \
-  --rest-api-id $API_ID \
-  --resource-id $RESOURCE_ID \
-  --http-method OPTIONS \
-  --status-code 200 \
-  --patch-operations \
-    op=add,path=/responseParameters/method.response.header.Access-Control-Allow-Origin,value="'*'" \
-    op=add,path=/responseParameters/method.response.header.Access-Control-Allow-Methods,value="'POST,OPTIONS'" \
-    op=add,path=/responseParameters/method.response.header.Access-Control-Allow-Headers,value="'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'" \
-  --region $REGION
-
-# Deploy API
+# 🚀 Deploy
 echo "🚀 Deploying API to stage 'prod'..."
 aws apigateway create-deployment \
   --rest-api-id $API_ID \
@@ -141,3 +92,4 @@ aws apigateway create-deployment \
 
 echo "✅ API deployed at:"
 echo "🔗 https://$API_ID.execute-api.$REGION.amazonaws.com/prod/contact"
+
