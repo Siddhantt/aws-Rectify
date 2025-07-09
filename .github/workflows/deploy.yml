@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -22,47 +23,64 @@ jobs:
       - name: Make shell scripts executable
         run: chmod +x infra/*.sh
 
-      # Step to Create S3 Bucket, only if not created already
+      # ✅ S3 Bucket (idempotent)
       - name: Create and configure S3 bucket
         run: |
-          if ! aws s3api head-bucket --bucket siddhant-portfolio-2025; then
+          if ! aws s3api head-bucket --bucket siddhant-portfolio-2025 2>/dev/null; then
             ./infra/create-s3.sh
           else
-            echo "S3 bucket already exists, skipping creation."
+            echo "✅ S3 bucket already exists. Skipping creation."
           fi
 
-      # Step to Create DynamoDB Table, only if not created already
+      # ✅ DynamoDB Table (idempotent)
       - name: Create DynamoDB table
         run: |
-          if ! aws dynamodb describe-table --table-name ContactMessages; then
+          if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
             ./infra/create-dynamodb.sh
           else
-            echo "DynamoDB table already exists, skipping creation."
+            echo "✅ DynamoDB table already exists. Skipping creation."
           fi
 
-      # Step to Create IAM role, only if not created already
+      # ✅ IAM Role for Lambda (idempotent)
       - name: Create IAM role for Lambda
         run: |
-          if ! aws iam get-role --role-name lambda-dynamodb-role; then
+          if ! aws iam get-role --role-name lambda-dynamodb-role 2>/dev/null; then
             ./infra/create-iam.sh
           else
-            echo "IAM role already exists, skipping creation."
+            echo "✅ IAM role already exists. Skipping creation."
           fi
 
-      # Step to Deploy Lambda function, only if not created already
+      # ✅ Lambda Function (idempotent)
       - name: Deploy Lambda function
         run: |
-          if ! aws lambda get-function --function-name myLambdaFunction; then
+          if ! aws lambda get-function --function-name myLambdaFunction 2>/dev/null; then
             ./infra/create-lambda.sh
           else
-            echo "Lambda function already exists, skipping creation."
+            echo "✅ Lambda function already exists. Skipping creation."
           fi
 
-      # Step to Setup API Gateway, only if not created already
+      # ✅ API Gateway (idempotent by name)
       - name: Setup API Gateway
         run: |
-          if ! aws apigateway get-rest-apis; then
+          API_ID=$(aws apigateway get-rest-apis \
+            --query "items[?name=='ContactAPI'].id" \
+            --output text)
+
+          if [ -z "$API_ID" ]; then
+            echo "📡 No API Gateway named 'ContactAPI' found. Creating..."
             ./infra/create-apigateway.sh
           else
-            echo "API Gateway already exists, skipping creation."
+            echo "✅ API Gateway 'ContactAPI' already exists with ID: $API_ID. Skipping creation."
           fi
+
+      # ✅ Test the /contact endpoint
+      - name: Test /contact API
+        run: |
+          API_ID=$(aws apigateway get-rest-apis \
+            --query "items[?name=='ContactAPI'].id" \
+            --output text)
+
+          URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          echo "🚀 Testing deployed API endpoint: $URL"
+          curl -i -X POST "$URL" -H "Content-Type: application/json" \
+            -d '{"name":"Test","email":"test@example.com","message":"Hi"}'
