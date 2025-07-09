@@ -33,9 +33,11 @@ else
   echo "✅ S3 bucket $BUCKET_NAME already exists. Skipping creation."
 fi
 
-# ✅ Always sync latest frontend files
-echo "🚀 Uploading latest frontend files to S3..."
-aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete
+# ✅ Always sync latest frontend files with cache busting
+echo "🚀 Uploading latest frontend files to S3 (no-cache, force refresh)..."
+aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
+  --exact-timestamps \
+  --cache-control "no-cache, no-store, must-revalidate"
 
 echo "🌍 Website URL:"
 echo "http://$BUCKET_NAME.s3-website-$AWS_REGION.amazonaws.com"
