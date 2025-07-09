@@ -85,8 +85,7 @@ aws lambda add-permission \
 
 # 🔥 CORS: Add OPTIONS method (safe)
 echo "🔧 Adding OPTIONS method for CORS..."
-
-# Add OPTIONS method (skip if exists)
+# Add OPTIONS method
 aws apigateway put-method \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
@@ -124,6 +123,7 @@ aws apigateway put-integration-response \
   --response-parameters method.response.header.Access-Control-Allow-Methods="'POST,OPTIONS'" \
   --response-parameters method.response.header.Access-Control-Allow-Origin="'*'" \
   --region $REGION
+
 
 # 🚀 Deploy
 echo "🚀 Deploying API to stage 'prod'..."
