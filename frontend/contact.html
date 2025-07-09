@@ -14,9 +14,9 @@
 
   <section>
     <form id="contactForm">
-      <input type="text" name="name" placeholder="Your Name" required />
-      <input type="email" name="email" placeholder="Your Email" required />
-      <textarea name="message" placeholder="Your Message" required></textarea>
+      <input type="text" id="name" name="name" placeholder="Your Name" required />
+      <input type="email" id="email" name="email" placeholder="Your Email" required />
+      <textarea id="message" name="message" placeholder="Your Message" required></textarea>
       <button type="submit">Send</button>
     </form>
   </section>
@@ -25,19 +25,24 @@
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Get form values by name
-      const name = e.target.name.value;
-      const email = e.target.email.value;
-      const message = e.target.message.value;
+      // ✅ Correct way using element IDs
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const message = document.getElementById("message").value;
 
-      const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message })
-      });
+      try {
+        const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, message })
+        });
 
-      const data = await res.json();
-      alert(data.message || "Thank you!");
+        const data = await res.json();
+        alert(data.message || "Thank you!");
+      } catch (error) {
+        alert("Error submitting form");
+        console.error(error);
+      }
     });
   </script>
 </body>
