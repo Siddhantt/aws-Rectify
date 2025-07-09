@@ -30,11 +30,7 @@
       const email = e.target.email.value;
       const message = e.target.message.value;
 
-<<<<<<< HEAD
-      const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {
-=======
       const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
->>>>>>> 677684a (Attributes)
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, message })
