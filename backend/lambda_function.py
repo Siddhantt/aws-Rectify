@@ -7,19 +7,18 @@ table = dynamo.Table('ContactMessages')
 
 def lambda_handler(event, context):
     try:
-        # Handle preflight request (CORS)
+        # Handle CORS preflight
         if event['httpMethod'] == 'OPTIONS':
             return {
                 'statusCode': 200,
                 'headers': {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'POST,OPTIONS',
-                    'Access-Control-Allow-Headers': '*'
+                    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
                 },
-                'body': json.dumps({'message': 'CORS preflight success'})
+                'body': json.dumps({'message': 'CORS preflight passed'})
             }
 
-        # Parse request body
         body = json.loads(event.get('body', '{}'))
         name = body.get('name')
         email = body.get('email')
@@ -29,8 +28,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': '*'
+                    'Access-Control-Allow-Origin': '*'
                 },
                 'body': json.dumps({'error': 'Missing fields'})
             }
@@ -44,22 +42,19 @@ def lambda_handler(event, context):
         })
 
         return {
-        'statusCode': 200,
-        'headers': {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'OPTIONS,POST'
-    },
-        'body': json.dumps({'message': 'Message saved successfully'})
-}
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'message': 'Message saved successfully'})
+        }
 
     except Exception as e:
-        print('Error:', str(e))
+        print("Error:", str(e))
         return {
             'statusCode': 500,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': '*'
+                'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({'error': 'Internal Server Error'})
         }
