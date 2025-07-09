@@ -20,20 +20,27 @@ cd backend
 zip -r ../$ZIP_FILE lambda_function.py > /dev/null
 cd ..
 
-# ✅ List contents of the zip to verify structure
+# ✅ Show zip contents
 echo "📂 Contents of zip archive:"
 unzip -l $ZIP_FILE
 
-# ✅ Create Lambda function
-echo "🚀 Deploying Lambda function..."
-aws lambda create-function \
-  --function-name "$FUNCTION_NAME" \
-  --zip-file fileb://$ZIP_FILE \
-  --handler lambda_function.lambda_handler \
-  --runtime python3.8 \
-  --role "$ROLE_ARN"
+# ✅ Deploy Lambda (create or update)
+if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+  echo "🔁 Lambda exists. Updating code..."
+  aws lambda update-function-code \
+    --function-name "$FUNCTION_NAME" \
+    --zip-file fileb://$ZIP_FILE
+else
+  echo "🚀 Creating new Lambda function..."
+  aws lambda create-function \
+    --function-name "$FUNCTION_NAME" \
+    --zip-file fileb://$ZIP_FILE \
+    --handler lambda_function.lambda_handler \
+    --runtime python3.8 \
+    --role "$ROLE_ARN"
+fi
 
-# ✅ Optional: remove zip to keep workspace clean
+# ✅ Clean up
 rm -f $ZIP_FILE
 
-echo "✅ Lambda function '$FUNCTION_NAME' deployed successfully."
+echo "✅ Lambda function '$FUNCTION_NAME' is deployed and up to date."
