@@ -24,13 +24,8 @@ jobs:
         run: chmod +x infra/*.sh
 
       # ✅ S3 Bucket (idempotent)
-      - name: Create and configure S3 bucket
-        run: |
-          if ! aws s3api head-bucket --bucket siddhant-portfolio-2025 2>/dev/null; then
-            ./infra/create-s3.sh
-          else
-            echo "✅ S3 bucket already exists. Skipping creation."
-          fi
+      - name: Create and configure S3 bucket + upload frontend
+        run: ./infra/create-s3.sh
 
       # ✅ DynamoDB Table (idempotent)
       - name: Create DynamoDB table
