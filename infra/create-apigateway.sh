@@ -83,24 +83,30 @@ aws lambda add-permission \
   --region $REGION \
   --source-arn arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/POST/contact || echo "Permission already granted."
 
-# 🔥 CORS: Add OPTIONS method
+# 🔥 CORS: Add OPTIONS method (safe)
 echo "🔧 Adding OPTIONS method for CORS..."
 aws apigateway put-method \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --authorization-type "NONE" \
-  --region $REGION || echo "OPTIONS already exists."
+  --region $REGION || echo "✅ OPTIONS method already exists."
 
+# Put Method Response (safe)
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters '{"method.response.header.Access-Control-Allow-Headers": true, "method.response.header.Access-Control-Allow-Methods": true, "method.response.header.Access-Control-Allow-Origin": true}' \
+  --response-parameters '{
+    "method.response.header.Access-Control-Allow-Headers": true,
+    "method.response.header.Access-Control-Allow-Methods": true,
+    "method.response.header.Access-Control-Allow-Origin": true
+  }' \
   --response-models '{"application/json": "Empty"}' \
-  --region $REGION
+  --region $REGION || echo "✅ Method response already exists."
 
+# Put Integration (safe, will override if needed)
 aws apigateway put-integration \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
@@ -109,15 +115,19 @@ aws apigateway put-integration \
   --request-templates '{"application/json": "{\"statusCode\": 200}"}' \
   --region $REGION
 
+# Put Integration Response (safe)
 aws apigateway put-integration-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters '{"method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'", "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'", "method.response.header.Access-Control-Allow-Origin": "'*'"}' \
+  --response-parameters '{
+    "method.response.header.Access-Control-Allow-Headers": "'\''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'\''",
+    "method.response.header.Access-Control-Allow-Methods": "'\''POST,OPTIONS'\''",
+    "method.response.header.Access-Control-Allow-Origin": "'\''*'\''"
+  }' \
   --response-templates '{"application/json": ""}' \
-  --region $REGION
-
+  --region $REGION || echo "✅ Integration response already exists."
 
 
 # 🚀 Deploy
