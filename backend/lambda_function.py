@@ -7,7 +7,7 @@ table = dynamo.Table('ContactMessages')
 
 def lambda_handler(event, context):
     try:
-        # Handle preflight OPTIONS request
+        # Handle preflight request (CORS)
         if event['httpMethod'] == 'OPTIONS':
             return {
                 'statusCode': 200,
@@ -16,10 +16,10 @@ def lambda_handler(event, context):
                     'Access-Control-Allow-Methods': 'POST,OPTIONS',
                     'Access-Control-Allow-Headers': '*'
                 },
-                'body': json.dumps({'message': 'CORS preflight'})
+                'body': json.dumps({'message': 'CORS preflight success'})
             }
 
-        # Parse JSON body
+        # Parse request body
         body = json.loads(event.get('body', '{}'))
         name = body.get('name')
         email = body.get('email')
@@ -32,17 +32,16 @@ def lambda_handler(event, context):
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Headers': '*'
                 },
-                'body': json.dumps({'error': 'Missing fields in request'})
+                'body': json.dumps({'error': 'Missing fields'})
             }
 
-        item = {
+        # Save to DynamoDB
+        table.put_item(Item={
             'email': email,
             'name': name,
             'message': message,
             'timestamp': datetime.utcnow().isoformat()
-        }
-
-        table.put_item(Item=item)
+        })
 
         return {
             'statusCode': 200,
@@ -50,7 +49,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': '*'
             },
-            'body': json.dumps({'success': True, 'message': 'Message saved'})
+            'body': json.dumps({'message': 'Message saved successfully'})
         }
 
     except Exception as e:
