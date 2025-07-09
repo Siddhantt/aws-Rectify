@@ -3,14 +3,6 @@
 <head>
   <title>Contact</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #status.success { color: green; }
-    #status.error { color: red; }
-  </style>
 </head>
 <body>
   <header><h1>Contact Me</h1></header>
@@ -22,50 +14,30 @@
 
   <section>
     <form id="contactForm">
-      <input name="name" type="text" placeholder="Your Name" required />
-      <input name="email" type="email" placeholder="Your Email" required />
+      <input type="text" name="name" placeholder="Your Name" required />
+      <input type="email" name="email" placeholder="Your Email" required />
       <textarea name="message" placeholder="Your Message" required></textarea>
       <button type="submit">Send</button>
     </form>
-    <div id="status"></div>
   </section>
 
   <script>
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const status = document.getElementById("status");
-      status.textContent = "Sending...";
-      status.className = "";
+      // Get form values by name
+      const name = e.target.name.value;
+      const email = e.target.email.value;
+      const message = e.target.message.value;
 
-      const formData = new FormData(e.target);
-      const body = {
-        name: formData.get("name"),
-        email: formData.get("email"),
-        message: formData.get("message")
-      };
+      const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message })
+      });
 
-      try {
-        const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          status.textContent = data.message || "Message sent successfully!";
-          status.className = "success";
-          e.target.reset();
-        } else {
-          status.textContent = data.error || "Something went wrong!";
-          status.className = "error";
-        }
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Network error or server not reachable.";
-        status.className = "error";
-      }
+      const data = await res.json();
+      alert(data.message || "Thank you!");
     });
   </script>
 </body>
