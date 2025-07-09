@@ -14,28 +14,28 @@
 
   <section>
     <form id="contactForm">
-      <input type="text" placeholder="Your Name" required />
-      <input type="email" placeholder="Your Email" required />
-      <textarea placeholder="Your Message" required></textarea>
+      <input name="name" type="text" placeholder="Your Name" required />
+      <input name="email" type="email" placeholder="Your Email" required />
+      <textarea name="message" placeholder="Your Message" required></textarea>
       <button type="submit">Send</button>
     </form>
   </section>
 
-  <!-- ✅ Paste your script here just before </body> -->
   <script>
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      
-      const [name, email, message] = [
-        e.target[0].value,
-        e.target[1].value,
-        e.target[2].value
-      ];
 
-      const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {  // Replace with your actual API endpoint
+      const formData = new FormData(e.target);
+      const body = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        message: formData.get("message")
+      };
+
+      const res = await fetch("https://rexst525pc.execute-api.ap-south-1.amazonaws.com/prod/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message })
+        body: JSON.stringify(body)
       });
 
       const data = await res.json();
