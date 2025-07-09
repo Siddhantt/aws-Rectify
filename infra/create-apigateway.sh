@@ -85,50 +85,45 @@ aws lambda add-permission \
 
 # 🔥 CORS: Add OPTIONS method (safe)
 echo "🔧 Adding OPTIONS method for CORS..."
+
+# Add OPTIONS method (skip if exists)
 aws apigateway put-method \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
-  --authorization-type "NONE" \
-  --region $REGION || echo "✅ OPTIONS method already exists."
+  --authorization-type NONE \
+  --region $REGION 2>/dev/null || echo "✅ OPTIONS method already exists."
 
-# Put Method Response (safe)
+# Add method response for OPTIONS
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters '{
-    "method.response.header.Access-Control-Allow-Headers": true,
-    "method.response.header.Access-Control-Allow-Methods": true,
-    "method.response.header.Access-Control-Allow-Origin": true
-  }' \
-  --response-models '{"application/json": "Empty"}' \
-  --region $REGION || echo "✅ Method response already exists."
+  --response-parameters method.response.header.Access-Control-Allow-Headers=true \
+  --response-parameters method.response.header.Access-Control-Allow-Methods=true \
+  --response-parameters method.response.header.Access-Control-Allow-Origin=true \
+  --region $REGION 2>/dev/null || echo "✅ Method response already exists."
 
-# Put Integration (safe, will override if needed)
+# Add MOCK integration for OPTIONS
 aws apigateway put-integration \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --type MOCK \
-  --request-templates '{"application/json": "{\"statusCode\": 200}"}' \
+  --request-templates '{"application/json":"{\"statusCode\": 200}"}' \
   --region $REGION
 
-# Put Integration Response (safe)
+# Add integration response to return CORS headers
 aws apigateway put-integration-response \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters '{
-    "method.response.header.Access-Control-Allow-Headers": "'\''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'\''",
-    "method.response.header.Access-Control-Allow-Methods": "'\''POST,OPTIONS'\''",
-    "method.response.header.Access-Control-Allow-Origin": "'\''*'\''"
-  }' \
-  --response-templates '{"application/json": ""}' \
-  --region $REGION || echo "✅ Integration response already exists."
-
+  --response-parameters method.response.header.Access-Control-Allow-Headers="'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'" \
+  --response-parameters method.response.header.Access-Control-Allow-Methods="'POST,OPTIONS'" \
+  --response-parameters method.response.header.Access-Control-Allow-Origin="'*'" \
+  --region $REGION
 
 # 🚀 Deploy
 echo "🚀 Deploying API to stage 'prod'..."
