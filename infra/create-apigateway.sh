@@ -121,9 +121,8 @@ aws apigateway put-integration-response \
   --status-code 200 \
   --response-parameters method.response.header.Access-Control-Allow-Headers="'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'" \
   --response-parameters method.response.header.Access-Control-Allow-Methods="'POST,OPTIONS'" \
-  --response-parameters method.response.header.Access-Control-Allow-Origin="'*'" \
+  --response-parameters method.response.header.Access-Control-Allow-Origin="'\\*'" \
   --region $REGION
-
 
 # 🚀 Deploy
 echo "🚀 Deploying API to stage 'prod'..."
