@@ -44,13 +44,14 @@ def lambda_handler(event, context):
         })
 
         return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': '*'
-            },
-            'body': json.dumps({'message': 'Message saved successfully'})
-        }
+    'statusCode': 200,
+    'headers': {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST'
+    },
+    'body': json.dumps({'message': 'Message saved successfully'})
+}
 
     except Exception as e:
         print('Error:', str(e))
