@@ -28,9 +28,6 @@
     </section>
   </main>
 
-  <!-- ✅ Load API URL dynamically -->
-  <script src="config.js"></script>
-
   <script>
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -40,7 +37,7 @@
       const message = document.getElementById("message").value;
 
       try {
-        const response = await fetch(CONFIG.apiUrl, {
+        const response = await fetch("https://vgeh4rth84.execute-api.ap-south-1.amazonaws.com/prod/contact", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
