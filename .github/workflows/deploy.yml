@@ -52,39 +52,25 @@ jobs:
             ./infra/create-lambda.sh
           else
             echo "🔄 Updating existing Lambda function code..."
-              zip -j lambda.zip backend/lambda_function.py
-              aws lambda update-function-code \
+            zip -j lambda.zip lambda/lambda_function.py
+            aws lambda update-function-code \
               --function-name myLambdaFunction \
               --zip-file fileb://lambda.zip
-               fi
+          fi
 
-
-      # 🔸 API Gateway
+      # 🔸 API Gateway (manual CORS setup expected)
       - name: 🌐 Setup API Gateway
         run: ./infra/create-apigateway.sh
 
-      # 🔁 Inject API Gateway URL into frontend/config.js
-      - name: 🧩 Inject API Gateway URL into config.js
-        run: |
-          API_ID=$(aws apigateway get-rest-apis \
-            --query "items[?name=='ContactAPI'].id" \
-            --output text)
-
-          API_URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
-          echo "✅ Injecting API URL: $API_URL"
-          sed -i "s|__API_URL__|$API_URL|g" frontend/config.js
-
-      # 🔁 Upload frontend again after config.js change
-      - name: 🚀 Re-upload frontend with injected config
+      # ✅ Upload frontend with hardcoded config.js
+      - name: 🚀 Upload frontend to S3
         run: aws s3 sync frontend/ s3://siddhant-portfolio-2025/ --delete
 
       # ✅ Optional: Test the /contact API
       - name: 🧪 Test /contact API endpoint
         run: |
-          API_ID=$(aws apigateway get-rest-apis \
-            --query "items[?name=='ContactAPI'].id" \
-            --output text)
-          URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          URL="https://vvsp7ecqqb.execute-api.ap-south-1.amazonaws.com/prod/contact"
           echo "🚀 Testing endpoint: $URL"
           curl -i -X POST "$URL" -H "Content-Type: application/json" \
             -d '{"name":"Test","email":"test@example.com","message":"Hello from GitHub Actions!"}'
+
