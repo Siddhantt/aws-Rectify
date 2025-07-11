@@ -75,7 +75,7 @@ jobs:
 
       # 🔁 Upload frontend again after config.js change
       - name: 🚀 Re-upload frontend with injected config
-        run: aws s3 sync frontend/ s3://your-bucket-name/ --delete
+        run: aws s3 sync frontend/ s3://siddhant-portfolio-2025/ --delete
 
       # ✅ Optional: Test the /contact API
       - name: 🧪 Test /contact API endpoint
