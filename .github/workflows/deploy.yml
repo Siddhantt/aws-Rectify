@@ -52,11 +52,12 @@ jobs:
             ./infra/create-lambda.sh
           else
             echo "🔄 Updating existing Lambda function code..."
-            zip -j lambda.zip lambda/lambda_function.py
-            aws lambda update-function-code \
+              zip -j lambda.zip backend/lambda_function.py
+              aws lambda update-function-code \
               --function-name myLambdaFunction \
               --zip-file fileb://lambda.zip
-          fi
+               fi
+
 
       # 🔸 API Gateway
       - name: 🌐 Setup API Gateway
