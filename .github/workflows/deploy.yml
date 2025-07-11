@@ -48,11 +48,35 @@ jobs:
       # ✅ Lambda Function (idempotent)
       - name: Deploy Lambda function
         run: |
-          if ! aws lambda get-function --function-name myLambdaFunction 2>/dev/null; then
-            ./infra/create-lambda.sh
+          FUNCTION_NAME="myLambdaFunction"
+          ROLE_ARN="arn:aws:iam::326641642949:role/lambda-dynamodb-role"
+          ZIP_FILE="lambda_function.zip"
+
+          echo "📦 Zipping Lambda code..."
+          cd backend
+          zip -r ../$ZIP_FILE lambda_function.py > /dev/null
+          cd ..
+
+          echo "📂 Zip contents:"
+          unzip -l $ZIP_FILE
+
+          if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+            echo "🔁 Lambda exists. Updating..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://$ZIP_FILE
           else
-            echo "✅ Lambda function already exists. Skipping creation."
+            echo "🚀 Creating new Lambda function..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://$ZIP_FILE \
+              --handler lambda_function.lambda_handler \
+              --runtime python3.8 \
+              --role "$ROLE_ARN"
           fi
+
+          rm -f $ZIP_FILE
+          echo "✅ Lambda deployed."
 
       # ✅ API Gateway (idempotent by name)
       - name: Setup API Gateway
@@ -69,3 +93,4 @@ jobs:
           echo "🚀 Testing deployed API endpoint: $URL"
           curl -i -X POST "$URL" -H "Content-Type: application/json" \
             -d '{"name":"Test","email":"test@example.com","message":"Hi"}'
+
