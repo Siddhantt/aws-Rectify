@@ -49,7 +49,7 @@ else
   echo "✅ /contact resource already exists with ID: $RESOURCE_ID"
 fi
 
-# POST method
+# POST Method
 echo "🔧 Configuring POST method..."
 aws apigateway put-method \
   --rest-api-id $API_ID \
@@ -64,7 +64,7 @@ LAMBDA_ARN=$(aws lambda get-function \
   --query 'Configuration.FunctionArn' \
   --output text)
 
-echo "🔌 Setting integration with Lambda..."
+echo "🔌 Setting POST integration with Lambda..."
 aws apigateway put-integration \
   --rest-api-id $API_ID \
   --resource-id $RESOURCE_ID \
@@ -74,16 +74,49 @@ aws apigateway put-integration \
   --uri arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations \
   --region $REGION
 
-echo "🔐 Granting Lambda invoke permission..."
+# CORS: OPTIONS method
+echo "🔧 Configuring OPTIONS method for CORS..."
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type "NONE" \
+  --region $REGION || echo "OPTIONS method already exists."
+
+aws apigateway put-integration \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --type MOCK \
+  --region $REGION
+
+aws apigateway put-method-response \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --status-code 200 \
+  --response-parameters "method.response.header.Access-Control-Allow-Headers=true,method.response.header.Access-Control-Allow-Origin=true,method.response.header.Access-Control-Allow-Methods=true" \
+  --region $REGION || echo "OPTIONS method response already exists."
+
+aws apigateway put-integration-response \
+  --rest-api-id $API_ID \
+  --resource-id $RESOURCE_ID \
+  --http-method OPTIONS \
+  --status-code 200 \
+  --response-parameters "method.response.header.Access-Control-Allow-Headers='Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',method.response.header.Access-Control-Allow-Origin='*',method.response.header.Access-Control-Allow-Methods='POST,OPTIONS'" \
+  --region $REGION || echo "OPTIONS integration response already exists."
+
+# Lambda permission
+echo "🔐 Granting Lambda invoke permission to API Gateway..."
 aws lambda add-permission \
   --function-name $FUNCTION_NAME \
   --statement-id apigateway-access-$(date +%s) \
   --action lambda:InvokeFunction \
   --principal apigateway.amazonaws.com \
   --region $REGION \
-  --source-arn arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/POST/contact || echo "Permission already granted."
+  --source-arn arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/POST/contact || echo "Permission already exists."
 
-# 🚀 Deploy
+# Deploy API
 echo "🚀 Deploying API to stage 'prod'..."
 aws apigateway create-deployment \
   --rest-api-id $API_ID \

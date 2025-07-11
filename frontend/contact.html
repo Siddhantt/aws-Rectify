@@ -1,47 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header><h1>Contact Me</h1></header>
+  <header>
+    <h1>Contact Me</h1>
+  </header>
+
   <nav>
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
   </nav>
 
-  <section>
-    <form id="contactForm">
-      <input type="text" id="name" name="name" placeholder="Your Name" required />
-      <input type="email" id="email" name="email" placeholder="Your Email" required />
-      <textarea id="message" name="message" placeholder="Your Message" required></textarea>
-      <button type="submit">Send</button>
-    </form>
-  </section>
+  <main>
+    <section>
+      <form id="contactForm">
+        <input type="text" id="name" name="name" placeholder="Your Name" required />
+        <input type="email" id="email" name="email" placeholder="Your Email" required />
+        <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ✅ Load API URL dynamically -->
+  <script src="config.js"></script>
 
   <script>
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // ✅ Correct way using element IDs
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const message = document.getElementById("message").value;
 
       try {
-        const res = await fetch("https://8xt58ugjm5.execute-api.ap-south-1.amazonaws.com/prod/contact", {
+        const response = await fetch(CONFIG.apiUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({ name, email, message })
         });
 
-        const data = await res.json();
-        alert(data.message || "Thank you!");
+        const result = await response.json();
+        alert(result.message || "Thank you! Message sent.");
       } catch (error) {
-        alert("Error submitting form");
-        console.error(error);
+        console.error("❌ Error submitting contact form:", error);
+        alert("Failed to send message. Please try again later.");
       }
     });
   </script>

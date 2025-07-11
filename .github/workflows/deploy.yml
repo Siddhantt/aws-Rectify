@@ -10,25 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: 🔐 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Make shell scripts executable
+      - name: ✅ Make shell scripts executable
         run: chmod +x infra/*.sh
 
-      # ✅ S3 Bucket (idempotent)
-      - name: Create and configure S3 bucket + upload frontend
+      # 🔸 S3 Bucket (create & upload frontend)
+      - name: ☁️ Create and configure S3 bucket + upload frontend
         run: ./infra/create-s3.sh
 
-      # ✅ DynamoDB Table (idempotent)
-      - name: Create DynamoDB table
+      # 🔸 DynamoDB (create if not exists)
+      - name: 🗃️ Create DynamoDB table
         run: |
           if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
             ./infra/create-dynamodb.sh
@@ -36,8 +36,8 @@ jobs:
             echo "✅ DynamoDB table already exists. Skipping creation."
           fi
 
-      # ✅ IAM Role for Lambda (idempotent)
-      - name: Create IAM role for Lambda
+      # 🔸 IAM Role (create if not exists)
+      - name: 🛡️ Create IAM role for Lambda
         run: |
           if ! aws iam get-role --role-name lambda-dynamodb-role 2>/dev/null; then
             ./infra/create-iam.sh
@@ -45,27 +45,45 @@ jobs:
             echo "✅ IAM role already exists. Skipping creation."
           fi
 
-      # ✅ Lambda Function (idempotent)
-      - name: Deploy Lambda function
+      # 🔸 Lambda Function (always update code)
+      - name: 🧠 Deploy Lambda function
         run: |
           if ! aws lambda get-function --function-name myLambdaFunction 2>/dev/null; then
             ./infra/create-lambda.sh
           else
-            echo "✅ Lambda function already exists. Skipping creation."
+            echo "🔄 Updating existing Lambda function code..."
+            zip -j lambda.zip lambda/lambda_function.py
+            aws lambda update-function-code \
+              --function-name myLambdaFunction \
+              --zip-file fileb://lambda.zip
           fi
 
-      # ✅ API Gateway (idempotent by name)
-      - name: Setup API Gateway
+      # 🔸 API Gateway
+      - name: 🌐 Setup API Gateway
         run: ./infra/create-apigateway.sh
 
-      # ✅ Test the /contact endpoint
-      - name: Test /contact API
+      # 🔁 Inject API Gateway URL into frontend/config.js
+      - name: 🧩 Inject API Gateway URL into config.js
         run: |
           API_ID=$(aws apigateway get-rest-apis \
             --query "items[?name=='ContactAPI'].id" \
             --output text)
 
+          API_URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          echo "✅ Injecting API URL: $API_URL"
+          sed -i "s|__API_URL__|$API_URL|g" frontend/config.js
+
+      # 🔁 Upload frontend again after config.js change
+      - name: 🚀 Re-upload frontend with injected config
+        run: aws s3 sync frontend/ s3://your-bucket-name/ --delete
+
+      # ✅ Optional: Test the /contact API
+      - name: 🧪 Test /contact API endpoint
+        run: |
+          API_ID=$(aws apigateway get-rest-apis \
+            --query "items[?name=='ContactAPI'].id" \
+            --output text)
           URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
-          echo "🚀 Testing deployed API endpoint: $URL"
+          echo "🚀 Testing endpoint: $URL"
           curl -i -X POST "$URL" -H "Content-Type: application/json" \
-            -d '{"name":"Test","email":"test@example.com","message":"Hi"}'
+            -d '{"name":"Test","email":"test@example.com","message":"Hello from GitHub Actions!"}'
