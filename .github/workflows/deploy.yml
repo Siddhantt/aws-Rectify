@@ -52,10 +52,13 @@ jobs:
           ROLE_ARN="arn:aws:iam::326641642949:role/lambda-dynamodb-role"
           ZIP_FILE="lambda_function.zip"
 
-          echo "📦 Zipping Lambda code..."
-          cd backend
-          zip -r ../$ZIP_FILE lambda_function.py > /dev/null
-          cd ..
+          echo "📦 Zipping Lambda code dynamically..."
+          LAMBDA_PATH=$(find . -type f -name lambda_function.py | head -n 1)
+          if [ -z "$LAMBDA_PATH" ]; then
+            echo "❌ lambda_function.py not found!"
+            exit 1
+          fi
+          zip -j $ZIP_FILE "$LAMBDA_PATH"
 
           echo "📂 Zip contents:"
           unzip -l $ZIP_FILE
@@ -93,4 +96,3 @@ jobs:
           echo "🚀 Testing deployed API endpoint: $URL"
           curl -i -X POST "$URL" -H "Content-Type: application/json" \
             -d '{"name":"Test","email":"test@example.com","message":"Hi"}'
-
