@@ -5,33 +5,35 @@ set -e
 BUCKET_NAME="siddhant-portfolio-2025"
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
-API_ENDPOINT_FILE=".tmp_apigw_url.txt"  # Created during API creation
+API_NAME="ContactAPI"
+CONFIG_JS="frontend/config.js"
 
-echo "📂 Checking API endpoint file..."
-if [ ! -f "$API_ENDPOINT_FILE" ]; then
-  echo "❌ Missing $API_ENDPOINT_FILE. Please run create-api.sh first."
+# === Fetch API ID and construct URL dynamically ===
+echo "🌐 Fetching API Gateway ID for '$API_NAME'..."
+API_ID=$(aws apigateway get-rest-apis \
+  --query "items[?name=='$API_NAME'].id" \
+  --output text)
+
+if [[ -z "$API_ID" ]]; then
+  echo "❌ Error: API '$API_NAME' not found. Please run create-apigateway.sh first."
   exit 1
 fi
 
-API_GATEWAY_URL=$(cat "$API_ENDPOINT_FILE")
+API_GATEWAY_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/${API_STAGE}/contact"
+echo "🔗 API Gateway URL: $API_GATEWAY_URL"
 
-echo "🌐 API Gateway URL: $API_GATEWAY_URL"
-
-# === Replace value in config.js ===
-CONFIG_JS="frontend/config.js"
-echo "💡 Injecting API URL into $CONFIG_JS..."
-
+# === Inject URL into config.js ===
+echo "🛠️ Injecting API URL into $CONFIG_JS..."
 cat <<EOF > "$CONFIG_JS"
 window.API_GATEWAY_URL = "$API_GATEWAY_URL";
 EOF
+echo "✅ API URL injected into $CONFIG_JS"
 
-echo "✅ Injected API URL into config.js"
-
-# === Create bucket only if it doesn't exist ===
+# === Create S3 bucket if it doesn't exist ===
 if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
   echo "🪣 Creating S3 bucket: $BUCKET_NAME..."
   if [[ "$AWS_REGION" == "us-east-1" ]]; then
-    aws s3api create-bucket --bucket "$BUCKET_NAME" --region "$AWS_REGION"
+    aws s3api create-bucket --bucket "$BUCKET_NAME"
   else
     aws s3api create-bucket \
       --bucket "$BUCKET_NAME" \
@@ -43,7 +45,7 @@ if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
   aws s3api delete-public-access-block --bucket "$BUCKET_NAME" || echo "Already removed."
 
   echo "🌐 Enabling static website hosting..."
-  aws s3 website "s3://$BUCKET_NAME/" \
+  aws s3 website s3://$BUCKET_NAME/ \
     --index-document index.html \
     --error-document error.html
 
@@ -55,12 +57,12 @@ else
   echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
 fi
 
-# === Sync frontend files to S3 ===
+# === Sync frontend to S3 ===
 echo "🚀 Uploading frontend files to S3 (no-cache)..."
 aws s3 sync ./frontend "s3://$BUCKET_NAME/" --delete \
   --exact-timestamps \
   --cache-control "no-cache, no-store, must-revalidate"
 
-# === Final output ===
+# === Final Output ===
 echo "🌍 Website deployed!"
 echo "🔗 http://$BUCKET_NAME.s3-website-$AWS_REGION.amazonaws.com"
