@@ -2,7 +2,7 @@
 
 set -e
 
-BUCKET_NAME="siddhantsPort"
+BUCKET_NAME="siddhant"
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
 API_NAME="ContactAPI"
