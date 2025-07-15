@@ -51,9 +51,13 @@ if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
   aws s3 website "s3://$BUCKET_NAME/" \
     --index-document index.html \
     --error-document error.html
+else
+  echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
+fi
 
-  echo "🔐 Applying public-read bucket policy dynamically..."
-  cat <<EOF > /tmp/bucket-policy.json
+# === ALWAYS apply/update bucket policy ===
+echo "🔐 Applying public-read bucket policy dynamically..."
+cat <<EOF > /tmp/bucket-policy.json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -68,12 +72,9 @@ if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
 }
 EOF
 
-  aws s3api put-bucket-policy \
-    --bucket "$BUCKET_NAME" \
-    --policy file:///tmp/bucket-policy.json
-else
-  echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
-fi
+aws s3api put-bucket-policy \
+  --bucket "$BUCKET_NAME" \
+  --policy file:///tmp/bucket-policy.json
 
 # === Upload Frontend to S3 ===
 echo "🚀 Uploading frontend files to S3 (no-cache)..."
