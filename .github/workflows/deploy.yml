@@ -23,18 +23,8 @@ jobs:
       - name: ✅ Make all scripts executable
         run: chmod +x infra/*.sh
 
-      - name: ✅ Create S3 bucket + inject config.js + upload frontend
-        run: ./infra/create-s3.sh
-
-      - name: ✅ Create DynamoDB table (if not exists)
-        run: |
-          if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
-            ./infra/create-dynamodb.sh
-          else
-            echo "✅ DynamoDB table already exists. Skipping."
-          fi
-
-      - name: ✅ Create IAM role (if not exists)
+      # 1️⃣ IAM Role (used by Lambda)
+      - name: ✅ Create IAM Role (if not exists)
         run: |
           if ! aws iam get-role --role-name lambda-dynamodb-role 2>/dev/null; then
             ./infra/create-iam.sh
@@ -42,13 +32,29 @@ jobs:
             echo "✅ IAM role already exists. Skipping."
           fi
 
-      - name: ✅ Deploy Lambda function
+      # 2️⃣ DynamoDB (used by Lambda)
+      - name: ✅ Create DynamoDB Table (if not exists)
+        run: |
+          if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
+            ./infra/create-dynamodb.sh
+          else
+            echo "✅ DynamoDB table already exists. Skipping."
+          fi
+
+      # 3️⃣ Lambda (must be created before API Gateway can link it)
+      - name: ✅ Deploy Lambda Function
         run: ./infra/create-lambda.sh
 
+      # 4️⃣ API Gateway (creates endpoint and stores .tmp_apigw_url.txt)
       - name: ✅ Setup API Gateway
         run: ./infra/create-apigateway.sh
 
-      - name: ✅ Inject API URL into config.js and re-upload to S3
+      # 5️⃣ Upload frontend after API URL is available
+      - name: ✅ Create S3 Bucket + Upload Frontend
+        run: ./infra/create-s3.sh
+
+      # 6️⃣ Inject API Gateway URL into config.js and re-upload frontend
+      - name: ✅ Inject API URL into config.js and Re-upload to S3
         run: |
           echo "🔄 Updating frontend config.js with deployed API URL..."
           API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
@@ -61,6 +67,7 @@ jobs:
             --exact-timestamps \
             --cache-control "no-cache, no-store, must-revalidate"
 
+      # 7️⃣ Smoke test API
       - name: ✅ Test Deployed API Endpoint
         run: |
           API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
