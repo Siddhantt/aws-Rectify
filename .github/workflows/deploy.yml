@@ -49,7 +49,7 @@ jobs:
       - name: ✅ Setup API Gateway
         run: ./infra/create-apigateway.sh
 
-      # 5️⃣ Upload frontend after API URL is available
+      # 5️⃣ Create S3 bucket and upload frontend (with injected config.js)
       - name: ✅ Create S3 Bucket + Upload Frontend
         run: ./infra/create-s3.sh
 
@@ -62,7 +62,8 @@ jobs:
           echo "window.API_GATEWAY_URL = \"$API_URL\";" > frontend/config.js
 
           echo "📤 Re-uploading frontend to S3 with updated config.js..."
-          BUCKET_NAME="siddhant-portfolio-2025"
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
           aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
             --exact-timestamps \
             --cache-control "no-cache, no-store, must-revalidate"
