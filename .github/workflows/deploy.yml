@@ -21,7 +21,7 @@ jobs:
           aws-region: ap-south-1
 
       - name: ✅ Make all scripts executable
-        run: chmod +x infra/*.sh
+        run: chmod +x infra/*.sh enable-cors.sh
 
       # 1️⃣ IAM Role (used by Lambda)
       - name: ✅ Create IAM Role (if not exists)
@@ -45,9 +45,13 @@ jobs:
       - name: ✅ Deploy Lambda Function
         run: ./infra/create-lambda.sh
 
-      # 4️⃣ API Gateway (creates endpoint and stores .tmp_apigw_url.txt)
+      # 4️⃣ API Gateway (creates endpoint)
       - name: ✅ Setup API Gateway
         run: ./infra/create-apigateway.sh
+
+      # 🔁  NEW STEP: Enable CORS on API Gateway
+      - name: ✅ Enable CORS on API Gateway
+        run: ./enable-cors.sh
 
       # 5️⃣ Create S3 bucket and upload frontend (with injected config.js)
       - name: ✅ Create S3 Bucket + Upload Frontend
