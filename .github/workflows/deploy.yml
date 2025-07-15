@@ -10,89 +10,61 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: ✅ Checkout Code
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: ✅ Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Make shell scripts executable
+      - name: ✅ Make all scripts executable
         run: chmod +x infra/*.sh
 
-      # ✅ S3 Bucket (idempotent)
-      - name: Create and configure S3 bucket + upload frontend
+      - name: ✅ Create S3 bucket + inject config.js + upload frontend
         run: ./infra/create-s3.sh
 
-      # ✅ DynamoDB Table (idempotent)
-      - name: Create DynamoDB table
+      - name: ✅ Create DynamoDB table (if not exists)
         run: |
           if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
             ./infra/create-dynamodb.sh
           else
-            echo "✅ DynamoDB table already exists. Skipping creation."
+            echo "✅ DynamoDB table already exists. Skipping."
           fi
 
-      # ✅ IAM Role for Lambda (idempotent)
-      - name: Create IAM role for Lambda
+      - name: ✅ Create IAM role (if not exists)
         run: |
           if ! aws iam get-role --role-name lambda-dynamodb-role 2>/dev/null; then
             ./infra/create-iam.sh
           else
-            echo "✅ IAM role already exists. Skipping creation."
+            echo "✅ IAM role already exists. Skipping."
           fi
 
-      # ✅ Lambda Function (idempotent)
-      - name: Deploy Lambda function
-        run: |
-          FUNCTION_NAME="myLambdaFunction"
-          ROLE_ARN="arn:aws:iam::326641642949:role/lambda-dynamodb-role"
-          ZIP_FILE="lambda_function.zip"
+      - name: ✅ Deploy Lambda function
+        run: ./infra/create-lambda.sh
 
-          echo "📦 Zipping Lambda code dynamically..."
-          LAMBDA_PATH=$(find . -type f -name lambda_function.py | head -n 1)
-          if [ -z "$LAMBDA_PATH" ]; then
-            echo "❌ lambda_function.py not found!"
-            exit 1
-          fi
-          zip -j $ZIP_FILE "$LAMBDA_PATH"
-
-          echo "📂 Zip contents:"
-          unzip -l $ZIP_FILE
-
-          if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
-            echo "🔁 Lambda exists. Updating..."
-            aws lambda update-function-code \
-              --function-name "$FUNCTION_NAME" \
-              --zip-file fileb://$ZIP_FILE
-          else
-            echo "🚀 Creating new Lambda function..."
-            aws lambda create-function \
-              --function-name "$FUNCTION_NAME" \
-              --zip-file fileb://$ZIP_FILE \
-              --handler lambda_function.lambda_handler \
-              --runtime python3.8 \
-              --role "$ROLE_ARN"
-          fi
-
-          rm -f $ZIP_FILE
-          echo "✅ Lambda deployed."
-
-      # ✅ API Gateway (idempotent by name)
-      - name: Setup API Gateway
+      - name: ✅ Setup API Gateway
         run: ./infra/create-apigateway.sh
 
-      # ✅ Test the /contact endpoint
-      - name: Test /contact API
+      - name: ✅ Inject API URL into config.js and re-upload to S3
         run: |
-          API_ID=$(aws apigateway get-rest-apis \
-            --query "items[?name=='ContactAPI'].id" \
-            --output text)
+          echo "🔄 Updating frontend config.js with deployed API URL..."
+          API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
+          API_URL="https://${API_ID}.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          echo "window.API_GATEWAY_URL = \"$API_URL\";" > frontend/config.js
 
-          URL="https://$API_ID.execute-api.ap-south-1.amazonaws.com/prod/contact"
-          echo "🚀 Testing deployed API endpoint: $URL"
-          curl -i -X POST "$URL" -H "Content-Type: application/json" \
-            -d '{"name":"Test","email":"test@example.com","message":"Hi"}'
+          echo "📤 Re-uploading frontend to S3 with updated config.js..."
+          BUCKET_NAME="siddhant-portfolio-2025"
+          aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
+            --exact-timestamps \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: ✅ Test Deployed API Endpoint
+        run: |
+          API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
+          URL="https://${API_ID}.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          echo "🌐 Testing API endpoint: $URL"
+          curl -s -X POST "$URL" -H "Content-Type: application/json" \
+            -d '{"name":"Test","email":"test@example.com","message":"Hello from GitHub Actions"}'
