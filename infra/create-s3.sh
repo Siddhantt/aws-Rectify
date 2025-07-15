@@ -2,7 +2,7 @@
 
 set -e
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID,,}"
+BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
 API_NAME="ContactAPI"
@@ -45,14 +45,29 @@ if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
   aws s3api delete-public-access-block --bucket "$BUCKET_NAME" || echo "Already removed."
 
   echo "🌐 Enabling static website hosting..."
-  aws s3 website s3://$BUCKET_NAME/ \
+  aws s3 website "s3://$BUCKET_NAME/" \
     --index-document index.html \
     --error-document error.html
 
-  echo "🔐 Applying public-read policy..."
+  echo "🔐 Applying public-read bucket policy dynamically..."
+  cat <<EOF > /tmp/bucket-policy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::$BUCKET_NAME/*"
+    }
+  ]
+}
+EOF
+
   aws s3api put-bucket-policy \
     --bucket "$BUCKET_NAME" \
-    --policy file://infra/bucket-policy.json
+    --policy file:///tmp/bucket-policy.json
 else
   echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
 fi
