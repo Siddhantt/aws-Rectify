@@ -11,7 +11,7 @@
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::326641642949:user/devops-user"
+        "AWS": "arn:aws:iam::586794481385:user/awse"
       },
       "Action": "sts:AssumeRole"
     }

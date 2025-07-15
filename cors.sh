@@ -3,7 +3,7 @@
 set -e
 
 # Replace with your actual API ID and region
-API_ID="8xt58ugjm5"
+API_ID="jazfn7o546"
 REGION="ap-south-1"
 RESOURCE_PATH="contact"
 

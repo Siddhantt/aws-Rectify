@@ -6,7 +6,7 @@
       "Action": [
         "dynamodb:PutItem"
       ],
-      "Resource": "arn:aws:dynamodb:ap-south-1:326641642949:table/ContactMessages"
+      "Resource": "arn:aws:dynamodb:ap-south-1:586794481385:table/ContactMessages"
     },
     {
       "Effect": "Allow",

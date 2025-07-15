@@ -1,20 +1,24 @@
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
-
-echo "🔐 Generating dynamic bucket policy for $BUCKET_NAME..."
-cat <<EOF > /tmp/bucket-policy.json
 {
   "Version": "2012-10-17",
-  "Statement": [{
-    "Sid": "PublicReadGetObject",
-    "Effect": "Allow",
-    "Principal": "*",
-    "Action": "s3:GetObject",
-    "Resource": "arn:aws:s3:::$BUCKET_NAME/*"
-  }]
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::$BUCKET_NAME/*"
+    },
+    {
+      "Sid": "AllowGithubActionsUserToWrite",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::$ACCOUNT_ID:user/$IAM_USER_NAME"
+      },
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::$BUCKET_NAME",
+        "arn:aws:s3:::$BUCKET_NAME/*"
+      ]
+    }
+  ]
 }
-EOF
-
-aws s3api put-bucket-policy \
-  --bucket "$BUCKET_NAME" \
-  --policy file:///tmp/bucket-policy.json
