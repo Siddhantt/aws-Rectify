@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -e
-
-BUCKET_NAME="siddhant"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID,,}"
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
 API_NAME="ContactAPI"
