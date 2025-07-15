@@ -1,14 +1,16 @@
 #!/bin/bash
 
 set -e
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
+
+# === Config ===
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
 API_NAME="ContactAPI"
 CONFIG_JS="frontend/config.js"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
 
-# === Fetch API ID and construct URL dynamically ===
+# === Get API Gateway ID & Construct URL ===
 echo "🌐 Fetching API Gateway ID for '$API_NAME'..."
 API_ID=$(aws apigateway get-rest-apis \
   --query "items[?name=='$API_NAME'].id" \
@@ -22,16 +24,17 @@ fi
 API_GATEWAY_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/${API_STAGE}/contact"
 echo "🔗 API Gateway URL: $API_GATEWAY_URL"
 
-# === Inject URL into config.js ===
+# === Inject API URL into config.js ===
 echo "🛠️ Injecting API URL into $CONFIG_JS..."
 cat <<EOF > "$CONFIG_JS"
 window.API_GATEWAY_URL = "$API_GATEWAY_URL";
 EOF
 echo "✅ API URL injected into $CONFIG_JS"
 
-# === Create S3 bucket if it doesn't exist ===
+# === Create S3 Bucket if Not Exists ===
 if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
   echo "🪣 Creating S3 bucket: $BUCKET_NAME..."
+
   if [[ "$AWS_REGION" == "us-east-1" ]]; then
     aws s3api create-bucket --bucket "$BUCKET_NAME"
   else
@@ -72,7 +75,7 @@ else
   echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
 fi
 
-# === Sync frontend to S3 ===
+# === Upload Frontend to S3 ===
 echo "🚀 Uploading frontend files to S3 (no-cache)..."
 aws s3 sync ./frontend "s3://$BUCKET_NAME/" --delete \
   --exact-timestamps \
