@@ -2,7 +2,7 @@
 
 set -e
 
-BUCKET_NAME="siddhant-portfolio-2025"
+BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
 AWS_REGION="ap-south-1"
 API_STAGE="prod"
 API_NAME="ContactAPI"
