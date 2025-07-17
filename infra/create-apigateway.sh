@@ -29,13 +29,11 @@ CONTACT_ID=$(aws apigateway get-resources --rest-api-id "$API_ID" \
 if [ -n "$CONTACT_ID" ]; then
   echo "/$RESOURCE_PATH resource already exists. Deleting..."
 
-  # Delete methods first to avoid resource conflict
   for method in POST OPTIONS; do
     aws apigateway delete-method --rest-api-id "$API_ID" \
       --resource-id "$CONTACT_ID" --http-method "$method" 2>/dev/null || true
   done
 
-  # Then delete the resource
   aws apigateway delete-resource --rest-api-id "$API_ID" --resource-id "$CONTACT_ID"
 fi
 
@@ -46,6 +44,10 @@ CONTACT_ID=$(aws apigateway create-resource \
   --parent-id "$ROOT_ID" \
   --path-part "$RESOURCE_PATH" \
   --query "id" --output text)
+
+########################
+# POST METHOD + Lambda
+########################
 
 echo "Configuring POST method..."
 aws apigateway put-method \
@@ -61,6 +63,36 @@ aws apigateway put-integration \
   --type AWS_PROXY \
   --integration-http-method POST \
   --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/arn:aws:lambda:$REGION:$ACCOUNT_ID:function:$FUNCTION_NAME/invocations"
+
+echo "Adding POST method response (CORS headers)..."
+aws apigateway put-method-response \
+  --rest-api-id "$API_ID" \
+  --resource-id "$CONTACT_ID" \
+  --http-method POST \
+  --status-code 200 \
+  --response-parameters '{
+    "method.response.header.Access-Control-Allow-Origin": true,
+    "method.response.header.Access-Control-Allow-Methods": true,
+    "method.response.header.Access-Control-Allow-Headers": true
+  }' \
+  --response-models '{"application/json":"Empty"}'
+
+echo "Adding POST integration response (CORS headers)..."
+aws apigateway put-integration-response \
+  --rest-api-id "$API_ID" \
+  --resource-id "$CONTACT_ID" \
+  --http-method POST \
+  --status-code 200 \
+  --response-parameters '{
+    "method.response.header.Access-Control-Allow-Headers": "'\''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'\''",
+    "method.response.header.Access-Control-Allow-Methods": "'\''POST,OPTIONS'\''",
+    "method.response.header.Access-Control-Allow-Origin": "'\''*'\''"
+  }' \
+  --response-templates '{"application/json": ""}'
+
+########################
+# OPTIONS METHOD (CORS)
+########################
 
 echo "Adding CORS (OPTIONS method)..."
 aws apigateway put-method \
@@ -81,7 +113,11 @@ aws apigateway put-method-response \
   --resource-id "$CONTACT_ID" \
   --http-method OPTIONS \
   --status-code 200 \
-  --response-parameters '{"method.response.header.Access-Control-Allow-Headers": true, "method.response.header.Access-Control-Allow-Methods": true, "method.response.header.Access-Control-Allow-Origin": true}' \
+  --response-parameters '{
+    "method.response.header.Access-Control-Allow-Headers": true,
+    "method.response.header.Access-Control-Allow-Methods": true,
+    "method.response.header.Access-Control-Allow-Origin": true
+  }' \
   --response-models '{"application/json":"Empty"}'
 
 aws apigateway put-integration-response \
@@ -95,6 +131,10 @@ aws apigateway put-integration-response \
     "method.response.header.Access-Control-Allow-Origin": "'\''*'\''"
   }' \
   --response-templates '{"application/json": ""}'
+
+########################
+# PERMISSION + DEPLOY
+########################
 
 echo "Granting Lambda invoke permission to API Gateway..."
 aws lambda add-permission \
@@ -110,5 +150,6 @@ aws apigateway create-deployment \
   --rest-api-id "$API_ID" \
   --stage-name prod
 
-echo "API setup completed. Endpoint:"
+echo "✅ API setup completed."
+echo "🌐 Endpoint:"
 echo "https://$API_ID.execute-api.$REGION.amazonaws.com/prod/$RESOURCE_PATH"
