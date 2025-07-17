@@ -90,9 +90,9 @@ aws apigateway put-integration-response \
   --http-method OPTIONS \
   --status-code 200 \
   --response-parameters '{
-    "method.response.header.Access-Control-Allow-Headers":"\'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token\'",
-    "method.response.header.Access-Control-Allow-Methods":"\'POST,OPTIONS\'",
-    "method.response.header.Access-Control-Allow-Origin":"\'*\'"
+    "method.response.header.Access-Control-Allow-Headers":"Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+    "method.response.header.Access-Control-Allow-Methods":"POST,OPTIONS",
+    "method.response.header.Access-Control-Allow-Origin":"*"
   }' \
   --response-templates '{"application/json": ""}'
 
