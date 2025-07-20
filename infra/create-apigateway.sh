@@ -18,7 +18,6 @@ echo "🚀 Creating new API '$API_NAME'..."
 API_ID=$(aws apigateway create-rest-api --name "$API_NAME" --query "id" --output text)
 echo "✅ Created API ID: $API_ID"
 
-# Get root resource
 ROOT_ID=$(aws apigateway get-resources --rest-api-id "$API_ID" --query "items[?path=='/'].id" --output text)
 
 echo "📁 Creating /$RESOURCE_PATH resource..."
@@ -28,6 +27,8 @@ CONTACT_ID=$(aws apigateway create-resource \
   --path-part "$RESOURCE_PATH" \
   --query "id" --output text)
 
-echo "📌 Save these for the next script:"
+echo ""
+echo "📌 Save and export these variables before running the next script:"
 echo "export API_ID=$API_ID"
 echo "export CONTACT_ID=$CONTACT_ID"
+
