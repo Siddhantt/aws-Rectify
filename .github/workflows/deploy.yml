@@ -55,7 +55,7 @@ jobs:
 
       # 🔁 Create POST method and deploy it (final resource method)
       - name: 🔁 Create POST method with Lambda Integration and Deploy
-        run: ./POST.sh
+        run: ./infra/POST.sh
 
       # 6️⃣ Create S3 Bucket + Upload Frontend
       - name: ✅ Create S3 Bucket + Upload Frontend
