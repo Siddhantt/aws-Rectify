@@ -21,7 +21,7 @@ jobs:
           aws-region: ap-south-1
 
       - name: ✅ Make all scripts executable
-        run: chmod +x infra/*.sh enable-cors.sh
+        run: chmod +x infra/*.sh enable-cors.sh POST.sh
 
       # 1️⃣ IAM Role
       - name: ✅ Create IAM Role (if not exists)
@@ -45,19 +45,23 @@ jobs:
       - name: ✅ Deploy Lambda Function
         run: ./infra/create-lambda.sh
 
-      # 🔁 MOVE API GATEWAY STEP EARLIER HERE
-      - name: 🚀 Setup API Gateway (NOW BEFORE S3)
+      # 4️⃣ API Gateway Base Setup
+      - name: 🚀 Create API Gateway Base (REST API only)
         run: ./infra/create-apigateway.sh
 
-      # 🔁 Enable CORS (before injecting config.js)
+      # 5️⃣ Enable CORS (OPTIONS method)
       - name: ✅ Enable CORS on API Gateway
         run: ./enable-cors.sh
 
-      # 4️⃣ Create S3 Bucket and Upload Frontend
+      # 🔁 Create POST method and deploy it (final resource method)
+      - name: 🔁 Create POST method with Lambda Integration and Deploy
+        run: ./POST.sh
+
+      # 6️⃣ Create S3 Bucket + Upload Frontend
       - name: ✅ Create S3 Bucket + Upload Frontend
         run: ./infra/create-s3.sh
 
-      # 5️⃣ Inject correct API URL into config.js
+      # 7️⃣ Inject Real API URL into config.js
       - name: ✅ Inject Real API URL into config.js and Upload
         run: |
           echo "🔄 Updating frontend config.js with real API Gateway URL..."
