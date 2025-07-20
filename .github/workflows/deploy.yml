@@ -21,7 +21,7 @@ jobs:
           aws-region: ap-south-1
 
       - name: ✅ Make all scripts executable
-        run: chmod +x infra/*.sh enable-cors.sh POST.sh
+        run: chmod +x infra/*.sh enable-cors.sh
 
       # 1️⃣ IAM Role
       - name: ✅ Create IAM Role (if not exists)
