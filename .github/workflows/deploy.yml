@@ -23,7 +23,7 @@ jobs:
       - name: ✅ Make all scripts executable
         run: chmod +x infra/*.sh enable-cors.sh
 
-      # 1️⃣ IAM Role (used by Lambda)
+      # 1️⃣ IAM Role
       - name: ✅ Create IAM Role (if not exists)
         run: |
           if ! aws iam get-role --role-name lambda-dynamodb-role 2>/dev/null; then
@@ -32,7 +32,7 @@ jobs:
             echo "✅ IAM role already exists. Skipping."
           fi
 
-      # 2️⃣ DynamoDB (used by Lambda)
+      # 2️⃣ DynamoDB
       - name: ✅ Create DynamoDB Table (if not exists)
         run: |
           if ! aws dynamodb describe-table --table-name ContactMessages 2>/dev/null; then
@@ -41,37 +41,23 @@ jobs:
             echo "✅ DynamoDB table already exists. Skipping."
           fi
 
-      # 3️⃣ Lambda (must be created before API Gateway can link it)
+      # 3️⃣ Lambda
       - name: ✅ Deploy Lambda Function
         run: ./infra/create-lambda.sh
 
-      # 4️⃣ Create S3 bucket and upload frontend (with injected config.js)
-      - name: ✅ Create S3 Bucket + Upload Frontend
-        run: ./infra/create-s3.sh
-
-      # 5️⃣ Inject temporary placeholder into config.js (will update after API Gateway)
-      - name: 🔧 Inject temporary config.js
-        run: |
-          echo "window.API_GATEWAY_URL = 'https://placeholder.com/api';" > frontend/config.js
-
-      # 6️⃣ Upload placeholder version to S3
-      - name: 📤 Upload Placeholder Frontend
-        run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
-          aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
-            --exact-timestamps \
-            --cache-control "no-cache, no-store, must-revalidate"
-
-      # 7️⃣ Setup API Gateway (NOW MOVED TO END)
-      - name: 🚀 Setup API Gateway (FINAL STEP)
+      # 🔁 MOVE API GATEWAY STEP EARLIER HERE
+      - name: 🚀 Setup API Gateway (NOW BEFORE S3)
         run: ./infra/create-apigateway.sh
 
-      # 8️⃣ Enable CORS on API Gateway
+      # 🔁 Enable CORS (before injecting config.js)
       - name: ✅ Enable CORS on API Gateway
         run: ./enable-cors.sh
 
-      # 9️⃣ Inject correct API URL into config.js and re-upload
+      # 4️⃣ Create S3 Bucket and Upload Frontend
+      - name: ✅ Create S3 Bucket + Upload Frontend
+        run: ./infra/create-s3.sh
+
+      # 5️⃣ Inject correct API URL into config.js
       - name: ✅ Inject Real API URL into config.js and Upload
         run: |
           echo "🔄 Updating frontend config.js with real API Gateway URL..."
