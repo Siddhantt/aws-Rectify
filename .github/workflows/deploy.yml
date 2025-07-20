@@ -45,34 +45,48 @@ jobs:
       - name: ✅ Deploy Lambda Function
         run: ./infra/create-lambda.sh
 
-      # 4️⃣ API Gateway (creates endpoint)
-      - name: ✅ Setup API Gateway
-        run: ./infra/create-apigateway.sh
-
-      # 🔁  NEW STEP: Enable CORS on API Gateway
-      - name: ✅ Enable CORS on API Gateway
-        run: ./enable-cors.sh
-
-      # 5️⃣ Create S3 bucket and upload frontend (with injected config.js)
+      # 4️⃣ Create S3 bucket and upload frontend (with injected config.js)
       - name: ✅ Create S3 Bucket + Upload Frontend
         run: ./infra/create-s3.sh
 
-      # 6️⃣ Inject API Gateway URL into config.js and re-upload frontend
-      - name: ✅ Inject API URL into config.js and Re-upload to S3
+      # 5️⃣ Inject temporary placeholder into config.js (will update after API Gateway)
+      - name: 🔧 Inject temporary config.js
         run: |
-          echo "🔄 Updating frontend config.js with deployed API URL..."
-          API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
-          API_URL="https://${API_ID}.execute-api.ap-south-1.amazonaws.com/prod/contact"
-          echo "window.API_GATEWAY_URL = \"$API_URL\";" > frontend/config.js
+          echo "window.API_GATEWAY_URL = 'https://placeholder.com/api';" > frontend/config.js
 
-          echo "📤 Re-uploading frontend to S3 with updated config.js..."
+      # 6️⃣ Upload placeholder version to S3
+      - name: 📤 Upload Placeholder Frontend
+        run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
           aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
             --exact-timestamps \
             --cache-control "no-cache, no-store, must-revalidate"
 
-      # 7️⃣ Smoke test API
+      # 7️⃣ Setup API Gateway (NOW MOVED TO END)
+      - name: 🚀 Setup API Gateway (FINAL STEP)
+        run: ./infra/create-apigateway.sh
+
+      # 8️⃣ Enable CORS on API Gateway
+      - name: ✅ Enable CORS on API Gateway
+        run: ./enable-cors.sh
+
+      # 9️⃣ Inject correct API URL into config.js and re-upload
+      - name: ✅ Inject Real API URL into config.js and Upload
+        run: |
+          echo "🔄 Updating frontend config.js with real API Gateway URL..."
+          API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
+          API_URL="https://${API_ID}.execute-api.ap-south-1.amazonaws.com/prod/contact"
+          echo "window.API_GATEWAY_URL = \"$API_URL\";" > frontend/config.js
+
+          echo "📤 Re-uploading updated frontend to S3..."
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="siddhant-portfolio-${ACCOUNT_ID}"
+          aws s3 sync ./frontend s3://$BUCKET_NAME/ --delete \
+            --exact-timestamps \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      # 🔟 Smoke Test API
       - name: ✅ Test Deployed API Endpoint
         run: |
           API_ID=$(aws apigateway get-rest-apis --query "items[?name=='ContactAPI'].id" --output text)
